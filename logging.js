@@ -3,12 +3,25 @@ import fs from "fs"
 import chalk from 'chalk';
 chalk.level = 3;
 class logclass {
-    constructor() {
+    constructor({debug = false}= {}) {
         this.logs = {
             "active": false,
             "writestream": null,
-            "filename": null
+            "filename": null,
+            "debug":debug
         }
+    }
+
+    /**
+     * Enable or disable debug mode (Writes the File and Line of the executing code in front of the output)
+     *
+     * @param {string} folderpath path to the folder where the log is saved (from root)
+     * @param {string} filename Filename for the log. f.e. mylog.txt or bestlog.log
+     * @return {object} writestream
+     */
+    set_debug({debug = false}= {})
+    {
+        this.logs.debug = debug
     }
 
 
@@ -50,19 +63,18 @@ class logclass {
     /**
      * Adds an log
      *
-     * @param {string} folderpath path to the folder where the log is saved (from root)
-     * @param {string} filename Filename for the log. f.e. mylog.txt or bestlog.log
-     * @return {object} writestream
+     * @param {string} message Message to put on the screen
+     * @param {object} otions F.e {color = "green",warn = "Status"}
+     * @return {void} 
      */
     addlog(message, {
         color = null,
-        warn = null,
-        debug = null
+        warn = null
     } = {}) {
         let time = currenttime();
 
         //Add "Called from:"
-        if (debug) {
+        if (this.logs.debug) {
             const stack = new Error().stack;
             const stackLines = stack.split("\n");
             const callerLine = stackLines[2];
@@ -75,14 +87,14 @@ class logclass {
         }
 
         if ((color) && (warn)) {
-            if (debug) {
+            if (this.logs.debug) {
                 process.stdout.write(debugmsg)
             }
             process.stdout.write(chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}\n`));
 
         }
         else {
-            if (debug) {
+            if (this.logs.debug) {
                 process.stdout.write(debugmsg)
             }
             process.stdout.write(`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`);
@@ -96,7 +108,8 @@ class logclass {
 }
 
 var logvar = new logclass()
-function mainlog() {
+function mainlog({debug = false}= {}) {
+    logvar.set_debug({"debug":debug})
     return logvar;
 }
 
