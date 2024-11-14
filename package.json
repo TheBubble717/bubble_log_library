@@ -1,6 +1,6 @@
 {
   "name": "bubble_log_library",
-  "version": "1.3.3",
+  "version": "1.3.5",
   "description": "Bubblefish Repository for logging the process in all Projects",
   "main": "logging.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/TheBubble717/bubble_log_library.git"
   },
   "author": "Bubblefish",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/TheBubble717/bubble_log_library/issues"
   },
