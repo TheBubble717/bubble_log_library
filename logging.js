@@ -15,15 +15,13 @@ class logclass {
     /**
      * Enable or disable debug mode (Writes the File and Line of the executing code in front of the output)
      *
-     * @param {string} folderpath path to the folder where the log is saved (from root)
-     * @param {string} filename Filename for the log. f.e. mylog.txt or bestlog.log
-     * @return {object} writestream
+     * @param {object} writestream {debug = true}
+     * @return {void}
      */
     set_debug({debug = false}= {})
     {
         this.logs.debug = debug
     }
-
 
     /**
      * Activates the writestream
@@ -73,7 +71,7 @@ class logclass {
     } = {}) {
         let time = currenttime();
 
-        //Add "Called from:"
+        //Add "Called from file:line"
         if (this.logs.debug) {
             const stack = new Error().stack;
             const stackLines = stack.split("\n");
@@ -170,14 +168,6 @@ function checkforexistingfolder(folderpath) {
     });
 
 
-}
-
-function traceCaller() {
-    const stack = new Error().stack;
-    const stackLines = stack.split("\n");
-    // Skip the first two lines: the first is the trace itself, the second is the trace for this function.
-    const callerLine = stackLines[2];
-    console.log("Called from:", callerLine);
 }
 
 
