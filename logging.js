@@ -3,12 +3,12 @@ import fs from "fs"
 import chalk from 'chalk';
 chalk.level = 3;
 class logclass {
-    constructor({debug = false}= {}) {
+    constructor({ debug = false } = {}) {
         this.logs = {
             "active": false,
             "writestream": null,
             "filename": null,
-            "debug":debug
+            "debug": debug
         }
     }
 
@@ -18,8 +18,7 @@ class logclass {
      * @param {object} writestream {debug = true}
      * @return {void}
      */
-    set_debug({debug = false}= {})
-    {
+    set_debug({ debug = false } = {}) {
         this.logs.debug = debug
     }
 
@@ -70,6 +69,7 @@ class logclass {
         warn = null
     } = {}) {
         let time = currenttime();
+        var debugmsg = ""
 
         //Add "Called from file:line"
         if (this.logs.debug) {
@@ -80,22 +80,15 @@ class logclass {
             const match = callerLine.match(/([\/\\]([^\/\\]+\.js:\d+:\d+))/);
 
             if (match) {
-                var debugmsg = `${match[1].replace(/^.*[\/\\]/, '')} --- `
+                debugmsg = `${match[1].replace(/^.*[\/\\]/, '')} --- `
             }
         }
 
         if ((color) && (warn)) {
-            if (this.logs.debug) {
-                process.stdout.write(debugmsg)
-            }
-            process.stdout.write(chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}\n`));
-
+            process.stdout.write(debugmsg + chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}\n`));
         }
         else {
-            if (this.logs.debug) {
-                process.stdout.write(debugmsg)
-            }
-            process.stdout.write(`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`);
+            process.stdout.write(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`);
 
         }
         if (this.logs.active) {
@@ -106,8 +99,8 @@ class logclass {
 }
 
 var logvar = new logclass()
-function mainlog({debug = false}= {}) {
-    logvar.set_debug({"debug":debug})
+function mainlog({ debug = false } = {}) {
+    logvar.set_debug({ "debug": debug })
     return logvar;
 }
 
