@@ -1,8 +1,8 @@
 import {mainlog,logclass} from "./logging.js"
-var log2 = new logclass({debug:true})
-var log = mainlog({debug:true})
+var log2 = new logclass({addcallerlocation:true})
+var log = mainlog({nodisplay:true})
 
-log.set_debug({debug:false})
+log.set_settings({addcallerlocation:true})
 
 
 

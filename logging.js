@@ -3,23 +3,38 @@ import fs from "fs"
 import chalk from 'chalk';
 chalk.level = 3;
 class logclass {
-    constructor({ debug = false } = {}) {
+    //Internal Data
+    #requiresnewline
+
+    constructor({ nodisplay = false, addcallerlocation = false } = {}) {
+        //FileStreamData
         this.logs = {
             "active": false,
             "writestream": null,
             "filename": null,
-            "debug": debug
         }
+        //Settings
+        this.settings =
+        {
+            "nodisplay": nodisplay,
+            "addcallerlocation": addcallerlocation
+        }
+        this.#requiresnewline = (typeof process.env.PM2_HOME == "undefined" || typeof process.env.PM2_VERSION == "undefined" ) ? true : false;
     }
 
     /**
-     * Enable or disable debug mode (Writes the File and Line of the executing code in front of the output)
+     * Set the settings
      *
-     * @param {object} writestream {debug = true}
+     * @param {object} options { nodisplay = true, addcallerlocation = true }
      * @return {void}
      */
-    set_debug({ debug = false } = {}) {
-        this.logs.debug = debug
+    set_settings({ nodisplay = null, addcallerlocation = null } = {}) {
+        if (nodisplay !== null) {
+            this.settings.nodisplay = nodisplay;
+        }
+        if (addcallerlocation !== null) {
+            this.settings.addcallerlocation = addcallerlocation;
+        }
     }
 
     /**
@@ -61,18 +76,18 @@ class logclass {
      * Adds an log
      *
      * @param {string} message Message to put on the screen
-     * @param {object} otions F.e {color = "green",warn = "Status"}
+     * @param {object} options F.e {color = "green",warn = "Status"}
      * @return {void} 
      */
     addlog(message, {
         color = null,
         warn = null
     } = {}) {
-        let time = currenttime();
-        var debugmsg = ""
 
-        //Add "Called from file:line"
-        if (this.logs.debug) {
+        let time = currenttime();
+
+        var debugmsg = ""
+        if (this.settings.addcallerlocation) {
             const stack = new Error().stack;
             const stackLines = stack.split("\n");
             const callerLine = stackLines[2];
@@ -84,23 +99,33 @@ class logclass {
             }
         }
 
+        var mainmessage = ""
         if ((color) && (warn)) {
-            process.stdout.write(debugmsg + chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}\n`));
+            mainmessage = chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}`);
         }
         else {
-            process.stdout.write(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`);
+            mainmessage = `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}`
+        }
 
-        }
         if (this.logs.active) {
-            this.logs.writestream.write(`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message} \n`)
+            this.logs.writestream.write(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`)
         }
+
+        if (this.#requiresnewline) {
+            mainmessage = mainmessage + "\n"
+        }
+
+        if (!this.settings.nodisplay) {
+            process.stdout.write(debugmsg + mainmessage)
+        }
+
     }
 
 }
 
 var logvar = new logclass()
-function mainlog({ debug = false } = {}) {
-    logvar.set_debug({ "debug": debug })
+function mainlog(settings) {
+    logvar.set_settings(settings)
     return logvar;
 }
 
