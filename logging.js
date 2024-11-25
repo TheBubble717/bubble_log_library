@@ -6,7 +6,10 @@ class logclass {
     //Internal Data
     #requiresnewline
 
-    constructor({ nodisplay = false, addcallerlocation = false } = {}) {
+    //displayatleastlevels: 1 - standardlog ; 2 - Warnings ; 3 - Errors
+
+    //displayatleastlevel = 2 -> Displays Warnings and Errors (Standardlogs only gets saved in logfile)
+    constructor({ nodisplay = false, addcallerlocation = false, displayatleastlevel = 1 } = {}) {
         //FileStreamData
         this.logs = {
             "active": false,
@@ -17,7 +20,9 @@ class logclass {
         this.settings =
         {
             "nodisplay": nodisplay,
-            "addcallerlocation": addcallerlocation
+            "displayatleastlevel":displayatleastlevel,
+            "addcallerlocation": addcallerlocation,
+            
         }
         this.#requiresnewline = (typeof process.env.PM2_HOME == "undefined" || typeof process.env.PM2_VERSION == "undefined" ) ? true : false;
     }
@@ -76,12 +81,13 @@ class logclass {
      * Adds an log
      *
      * @param {string} message Message to put on the screen
-     * @param {object} options F.e {color = "green",warn = "Status"}
+     * @param {object} options F.e {color = "green",warn = "Status",level = 1}
      * @return {void} 
      */
     addlog(message, {
         color = null,
-        warn = null
+        warn = null,
+        level = 1,
     } = {}) {
 
         let time = currenttime();
@@ -100,7 +106,7 @@ class logclass {
         }
 
         var mainmessage = ""
-        if ((color) && (warn)) {
+        if ((color) && (warn) && level >= this.settings.displayatleastlevel) {
             mainmessage = chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}`);
         }
         else {
