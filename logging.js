@@ -6,10 +6,11 @@ class logclass {
     //Internal Data
     #requiresnewline
 
-    //displayatleastlevels: 1 - standardlog ; 2 - Warnings ; 3 - Errors
+    //displayatleastlevels: 1 - standardlog ; 2 - Warnings ; 3 - Errors 
 
-    //displayatleastlevel = 2 -> Displays Warnings and Errors (Standardlogs only gets saved in logfile)
-    constructor({ nodisplay = false, addcallerlocation = false, displayatleastlevel = 1 } = {}) {
+    //displayatleastlevel = 2 -> Displays Warnings and Errors (Standardlogs only gets saved in logfile) (Same with writeatleastlevel)
+
+    constructor({ nodisplay = false, addcallerlocation = false, displayatleastlevel = 1,writeatleastlevel = 1 } = {}) {
         //FileStreamData
         this.logs = {
             "active": false,
@@ -21,6 +22,7 @@ class logclass {
         {
             "nodisplay": nodisplay,
             "displayatleastlevel":displayatleastlevel,
+            "writeatleastlevel":writeatleastlevel,
             "addcallerlocation": addcallerlocation,
             
         }
@@ -33,9 +35,15 @@ class logclass {
      * @param {object} options { nodisplay = true, addcallerlocation = true }
      * @return {void}
      */
-    set_settings({ nodisplay = null, addcallerlocation = null } = {}) {
+    set_settings({ nodisplay = null, displayatleastlevel = null, writeatleastlevel = null, addcallerlocation = null } = {}) {
         if (nodisplay !== null) {
             this.settings.nodisplay = nodisplay;
+        }
+        if (displayatleastlevel !== null) {
+            this.settings.displayatleastlevel = displayatleastlevel;
+        }
+        if (writeatleastlevel !== null) {
+            this.settings.writeatleastlevel = writeatleastlevel;
         }
         if (addcallerlocation !== null) {
             this.settings.addcallerlocation = addcallerlocation;
@@ -105,25 +113,31 @@ class logclass {
             }
         }
 
-        var mainmessage = ""
-        if ((color) && (warn) && level >= this.settings.displayatleastlevel) {
-            mainmessage = chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}`);
-        }
-        else {
-            mainmessage = `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}`
-        }
 
-        if (this.logs.active) {
+        if (this.logs.active && level >= this.settings.writeatleastlevel) {
             this.logs.writestream.write(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`)
         }
+        
+        if(level >= this.settings.displayatleastlevel)
+        {
+            var mainmessage = ""
+            if ((color) && (warn) ) {
+                mainmessage = chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}`);
+            }
+            else {
+                mainmessage = `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}`
+            }
 
-        if (this.#requiresnewline) {
-            mainmessage = mainmessage + "\n"
-        }
+            if (this.#requiresnewline) {
+                mainmessage = mainmessage + "\n"
+            }
 
-        if (!this.settings.nodisplay) {
-            process.stdout.write(debugmsg + mainmessage)
+            if (!this.settings.nodisplay) {
+                process.stdout.write(debugmsg + mainmessage)
+            }
         }
+        return;
+
 
     }
 
