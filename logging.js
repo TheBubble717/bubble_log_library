@@ -5,12 +5,11 @@ chalk.level = 3;
 class logclass {
     //Internal Data
     #requiresnewline
+    #buffer_screen
+    #buffer_file
 
-    //displayatleastlevels: 1 - standardlog ; 2 - Warnings ; 3 - Errors 
 
-    //displayatleastlevel = 2 -> Displays Warnings and Errors (Standardlogs only gets saved in logfile) (Same with writeatleastlevel)
-
-    constructor({ nodisplay = false, addcallerlocation = false, displayatleastlevel = 1,writeatleastlevel = 1 } = {}) {
+    constructor({ nodisplay = false, addcallerlocation = false, screenLogLevel = 1,fileLogLevel = 1 } = {}) {
         //FileStreamData
         this.logs = {
             "active": false,
@@ -21,12 +20,15 @@ class logclass {
         this.settings =
         {
             "nodisplay": nodisplay,
-            "displayatleastlevel":displayatleastlevel,
-            "writeatleastlevel":writeatleastlevel,
-            "addcallerlocation": addcallerlocation,
+            "screenLogLevel":screenLogLevel, //screenLogLevels & fileLogLevel : log.addlog level need to be higher in order to get processed (f.e 3 = error and 1 = standard logs)
+            "fileLogLevel":fileLogLevel,     //screenLogLevels & fileLogLevel : log.addlog level need to be higher in order to get processed (f.e 3 = error and 1 = standard logs)
+            "addcallerlocation": addcallerlocation, //ignore screenLogLevel , don't write anything to screen
             
         }
         this.#requiresnewline = (typeof process.env.PM2_HOME == "undefined" || typeof process.env.PM2_VERSION == "undefined" ) ? true : false;
+        this.#buffer_screen = [];
+        this.#buffer_file = [];
+        this.process_buffer()
     }
 
     /**
@@ -35,20 +37,41 @@ class logclass {
      * @param {object} options { nodisplay = true, addcallerlocation = true }
      * @return {void}
      */
-    set_settings({ nodisplay = null, displayatleastlevel = null, writeatleastlevel = null, addcallerlocation = null } = {}) {
+    set_settings({ nodisplay = null, screenLogLevel = null, fileLogLevel = null, addcallerlocation = null } = {}) {
         if (nodisplay !== null) {
             this.settings.nodisplay = nodisplay;
         }
-        if (displayatleastlevel !== null) {
-            this.settings.displayatleastlevel = displayatleastlevel;
+        if (screenLogLevel !== null) {
+            this.settings.screenLogLevel = screenLogLevel;
         }
-        if (writeatleastlevel !== null) {
-            this.settings.writeatleastlevel = writeatleastlevel;
+        if (fileLogLevel !== null) {
+            this.settings.fileLogLevel = fileLogLevel;
         }
         if (addcallerlocation !== null) {
             this.settings.addcallerlocation = addcallerlocation;
         }
     }
+
+    async process_buffer()
+    {
+        do
+        {
+            if(this.#buffer_file.length)
+            {
+                let test = 
+                this.logs.writestream.write(this.#buffer_file.join(""))
+                this.#buffer_file = []
+            } 
+            if(this.#buffer_screen.length)
+            {
+                process.stdout.write(this.#buffer_screen.join(""))
+                this.#buffer_screen = []
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        while(true)
+    }
+
 
     /**
      * Activates the writestream
@@ -114,11 +137,11 @@ class logclass {
         }
 
 
-        if (this.logs.active && level >= this.settings.writeatleastlevel) {
-            this.logs.writestream.write(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`)
+        if (this.logs.active && level >= this.settings.fileLogLevel) {
+            this.#buffer_file.push(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`)
         }
         
-        if(level >= this.settings.displayatleastlevel)
+        if(!this.settings.nodisplay && level >= this.settings.screenLogLevel)
         {
             var mainmessage = ""
             if ((color) && (warn) ) {
@@ -132,9 +155,8 @@ class logclass {
                 mainmessage = mainmessage + "\n"
             }
 
-            if (!this.settings.nodisplay) {
-                process.stdout.write(debugmsg + mainmessage)
-            }
+            this.#buffer_screen.push(debugmsg + mainmessage)
+
         }
         return;
 
