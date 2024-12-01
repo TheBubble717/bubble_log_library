@@ -6,6 +6,19 @@ var log = mainlog({ nodisplay: false })
 log.set_settings({ addcallerlocation: false })
 
 
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+    process.emit('SIGINT');
+    process.exit(1);  // Exit with a failure code
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    log.addlog(reason.stack)
+    process.emit('SIGINT');
+    process.exit(1);
+});
+
+
 
 async function test() {
     await log.activatestream(`logs/`, "sdads.log")
@@ -25,6 +38,9 @@ async function test() {
     }
     for (let i = 0; i < 100000; i++) {
         log.addlog(i)
+        if(i==50000 ){ 
+            dsdsad //
+        }
     }
     timetocomplete1.stop = new Date().getTime();
 

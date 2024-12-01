@@ -1,7 +1,17 @@
 
 import fs from "fs"
 import chalk from 'chalk';
+import process from "process";
+
 chalk.level = 3;
+
+/**
+* Class
+*
+* In Case of an crash process.emit('SIGINT'); must be emitted to make sure everything is saved!
+* 
+*/
+
 class logclass {
     //Internal Data
     #requiresnewline
@@ -9,7 +19,8 @@ class logclass {
     #buffer_file
 
 
-    constructor({ nodisplay = false, addcallerlocation = false, screenLogLevel = 1,fileLogLevel = 1 } = {}) {
+
+    constructor({ nodisplay = false, addcallerlocation = false, screenLogLevel = 1, fileLogLevel = 1 } = {}) {
         //FileStreamData
         this.logs = {
             "active": false,
@@ -20,12 +31,12 @@ class logclass {
         this.settings =
         {
             "nodisplay": nodisplay,
-            "screenLogLevel":screenLogLevel, //screenLogLevels & fileLogLevel : log.addlog level need to be higher in order to get processed (f.e 3 = error and 1 = standard logs)
-            "fileLogLevel":fileLogLevel,     //screenLogLevels & fileLogLevel : log.addlog level need to be higher in order to get processed (f.e 3 = error and 1 = standard logs)
+            "screenLogLevel": screenLogLevel, //screenLogLevels & fileLogLevel : log.addlog level need to be higher in order to get processed (f.e 3 = error and 1 = standard logs)
+            "fileLogLevel": fileLogLevel,     //screenLogLevels & fileLogLevel : log.addlog level need to be higher in order to get processed (f.e 3 = error and 1 = standard logs)
             "addcallerlocation": addcallerlocation, //ignore screenLogLevel , don't write anything to screen
-            
+
         }
-        this.#requiresnewline = (typeof process.env.PM2_HOME == "undefined" || typeof process.env.PM2_VERSION == "undefined" ) ? true : false;
+        this.#requiresnewline = (typeof process.env.PM2_HOME == "undefined" || typeof process.env.PM2_VERSION == "undefined") ? true : false;
         this.#buffer_screen = [];
         this.#buffer_file = [];
         this.process_buffer()
@@ -52,24 +63,33 @@ class logclass {
         }
     }
 
-    async process_buffer()
-    {
-        do
-        {
-            if(this.#buffer_file.length)
-            {
-                let test = 
-                this.logs.writestream.write(this.#buffer_file.join(""))
-                this.#buffer_file = []
-            } 
-            if(this.#buffer_screen.length)
-            {
-                process.stdout.write(this.#buffer_screen.join(""))
-                this.#buffer_screen = []
+    async process_buffer() {
+        const onExit = () => {
+            flushBuffers();
+        };
+
+        const flushBuffers = () => {
+            // Flush the file buffer if there is content to write
+            if (this.#buffer_file.length) {
+                this.logs.writestream.write(this.#buffer_file.join(''));
+                this.#buffer_file = [];
             }
+
+            // Flush the screen buffer if there is content to display
+            if (this.#buffer_screen.length) {
+                process.stdout.write(this.#buffer_screen.join(''));
+                this.#buffer_screen = [];
+            }
+        };
+
+        process.on('SIGINT', onExit);
+        process.on('SIGTERM', onExit);
+
+
+        do {
+            flushBuffers();
             await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        while(true)
+        } while (true);
     }
 
 
@@ -140,11 +160,10 @@ class logclass {
         if (this.logs.active && level >= this.settings.fileLogLevel) {
             this.#buffer_file.push(debugmsg + `#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} => ${message}\n`)
         }
-        
-        if(!this.settings.nodisplay && level >= this.settings.screenLogLevel)
-        {
+
+        if (!this.settings.nodisplay && level >= this.settings.screenLogLevel) {
             var mainmessage = ""
-            if ((color) && (warn) ) {
+            if ((color) && (warn)) {
                 mainmessage = chalk[color](`#${time.year}-${time.month}-${time.day} ${time.hour}:${time.min}:${time.sec} [${warn}] => ${message}`);
             }
             else {
