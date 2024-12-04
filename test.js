@@ -6,16 +6,21 @@ var log = mainlog({ nodisplay: false })
 log.set_settings({ addcallerlocation: false })
 
 
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught exception:', error);
-    process.emit('SIGINT');
-    process.exit(1);  // Exit with a failure code
+process.on('uncaughtException',async function(error) {
+    log3.em.emit("exit")
+    log2.em.emit("exit")
+    log.em.emit("exit")
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    process.exit(1)
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', async function(reason, promise) {
     log.addlog(reason.stack)
-    process.emit('SIGINT');
-    process.exit(1);
+    log3.em.emit("exit")
+    log2.em.emit("exit")
+    log.em.emit("exit")
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    process.exit(1)
 });
 
 
@@ -27,7 +32,8 @@ async function test() {
     log.addlog("test1", { color: "green", warn: "warnung" })
     log2.addlog("test2", { color: "blue", warn: "warnung" })
     log3.addlog("test3", { color: "blue", warn: "warnung" }) //Something is not set -> Same as no settings at all!
-    log3.addlog("test3_2", { color: "blue", warn: "warnung", level:3 })
+    log3.addlog("test4", { color: "blue", warn: "warnung", level:3 })
+    log.addlog("test5")
 
 
 
@@ -38,7 +44,7 @@ async function test() {
     }
     for (let i = 0; i < 100000; i++) {
         log.addlog(i)
-        if(i==50000 ){ 
+        if(i==10 ){ 
             dsdsad //
         }
     }

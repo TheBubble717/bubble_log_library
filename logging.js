@@ -2,6 +2,7 @@
 import fs from "fs"
 import chalk from 'chalk';
 import process from "process";
+import { EventEmitter } from "node:events"
 
 chalk.level = 3;
 
@@ -12,7 +13,7 @@ chalk.level = 3;
 * 
 */
 
-class logclass {
+class logclass extends EventEmitter  {
     //Internal Data
     #requiresnewline
     #buffer_screen
@@ -21,6 +22,8 @@ class logclass {
 
 
     constructor({ nodisplay = false, addcallerlocation = false, screenLogLevel = 1, fileLogLevel = 1 } = {}) {
+        super();
+        this.em = new EventEmitter();
         //FileStreamData
         this.logs = {
             "active": false,
@@ -82,8 +85,7 @@ class logclass {
             }
         };
 
-        process.on('SIGINT', onExit);
-        process.on('SIGTERM', onExit);
+        this.em.on('exit', onExit);
 
 
         do {
