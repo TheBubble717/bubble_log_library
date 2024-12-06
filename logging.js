@@ -1,4 +1,3 @@
-
 import fs from "fs"
 import chalk from 'chalk';
 import process from "process";
@@ -13,7 +12,7 @@ chalk.level = 3;
 * 
 */
 
-class logclass extends EventEmitter  {
+class logclass extends EventEmitter {
     //Internal Data
     #requiresnewline
     #buffer_screen
@@ -29,6 +28,7 @@ class logclass extends EventEmitter  {
             "active": false,
             "writestream": null,
             "filename": null,
+            "folderpath": null
         }
         //Settings
         this.settings =
@@ -69,6 +69,7 @@ class logclass extends EventEmitter  {
     async process_buffer() {
         const onExit = () => {
             flushBuffers();
+            this.disablestream();
         };
 
         const flushBuffers = () => {
@@ -114,18 +115,44 @@ class logclass extends EventEmitter  {
                         else {
                             this.logs.filename = filename;
                         }
+                        this.logs.folderpath = folderpath
                         this.logs.writestream = fs.createWriteStream(folderpath + this.logs.filename, { flags: 'a' })
                         this.logs.active = true;
-                        this.addlog(`WriteStream activated to log-file: ${this.logs.filename}`);
+                        this.addlog(`WriteStream activated to log-file: ${this.logs.filename}`,{color:"white",level:99, warn:"BubbleLOG"});
                         resolve(this.logs.writestream);
                     }
                     catch (error) {
                         console.log(`Error opening Stream: ${error}`)
+                        reject(`Error opening Stream: ${error}`)
                     }
                 })
                 .catch(function (error) {
                     console.log(`Error checking folder: ${error}`);
+                    reject(`Error checking folder: ${error}`)
                 });
+        });
+    }
+
+    /**
+     * Disable the writestream
+     *
+     * @return {promise} Promise
+     */
+    disablestream() {
+        return new Promise(async (resolve) => {
+            try {
+                if (this.logs.active) {
+                    this.logs.writestream.end();
+                    this.logs.active = false;
+                    resolve()
+                }
+                else {
+                    resolve()
+                }
+            } catch (e) {
+                console.log(e);
+                reject("Error Closing Stream")
+            }
         });
     }
 
@@ -231,17 +258,15 @@ function checkforexistingfolder(folderpath) {
                 fs.mkdir(folderpath, err => {
                     if (err) {
                         console.log(err);
-                        reject("error");
+                        reject(err);
                     }
                     else {
-                        //console.log("Folder created!");
                         resolve(true);
                     }
 
                 });
             }
             else {
-                //console.log("Folder already existed!");
                 resolve(true);
             }
         });

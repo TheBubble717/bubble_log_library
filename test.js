@@ -26,9 +26,9 @@ process.on('unhandledRejection', async function(reason, promise) {
 
 
 async function test() {
-    await log.activatestream(`logs/`, "sdads.log")
-    await log2.activatestream(`logs/`, "23123.log")
-    await log2.activatestream(`logs/`, "home.log")
+    await log.activatestream(`logs/`, "1.log")
+    await log2.activatestream(`logs/`, "2.log")
+    await log3.activatestream(`logs/`, "3.log")
     log.addlog("test1", { color: "green", warn: "warnung" })
     log2.addlog("test2", { color: "blue", warn: "warnung" })
     log3.addlog("test3", { color: "blue", warn: "warnung" }) //Something is not set -> Same as no settings at all!
